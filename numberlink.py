@@ -231,7 +231,7 @@ if __name__ == "__main__":
 	if len(sys.argv) > 1:
 		name = sys.argv[1]
 	else:
-		name = "level2m.in"
+		name = "easy.in"
 
 	mystate = State(openIn(name))
 	prblm = NumberLink(mystate)

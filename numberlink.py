@@ -23,7 +23,6 @@ class NumberLink(Problem):
 
 	def goal_test(self, state):
 
-
 		for d in state.array:
 			for n in d:
 				if n == ".":
@@ -52,9 +51,7 @@ class NumberLink(Problem):
 
 	def simulation(self, state, action):
 		newState = copy.deepcopy(state)
-		newState.lastPos = action
-		newState.array[action[0]][action[1]] = newState.activeLetter
-		newState.pathEnded(state.activeLetter)
+		newState.action(action)
 		if newState.deadEnd():
 			return False
 		else:
@@ -126,14 +123,6 @@ class State(object):
 	def __lt__(self, other):
 		return self.array[0] < other.array[0]
 
-	def remaining(self):
-		output = []
-		for d in self.array:
-			for n in d:
-				if n not in output:
-					output.append(n)
-		output.remove(".")
-		return output
 
 	def action(self, pos):
 		self.lastPos = pos
@@ -147,42 +136,12 @@ class State(object):
 
 		return None
 
-
-
-		return newState
-
 	def isPathEnded(self):
-		res = False
-		if self.isNextTo(self.lastPos,self.targetPos):
-			res = True
-		return res
-	def pathEnded(self, letter):
-		i = 0
-		j = 0
-		res = True
-		list = []
-		while i < len(self.array):
-			while j < len(self.array[i]):
-				if self.array[i][j] == letter:
-					list.append([i,j])
-				j +=1
-			j = 0
-			i += 1
-		for start in list:
-			if not self.isNextToLetter(start):
-				res = False
-				break
-		if res == True:
-			self.remainingLetters.remove(letter)
-			if len(self.remainingLetters) != 0:
-				self.activeLetter = self.remainingLetters[0]
-				[self.lastPos, self.targetPos] = self.getFirstPos()
+		return self.isNextTo(self.lastPos,self.targetPos)
 
-		return res
 
 	def deadEnd(self):
 		return not pathExists(self.array,self.lastPos,self.targetPos)
-
 
 	def getAllLetters(self):
 		output = []
@@ -199,10 +158,8 @@ class State(object):
 		j=0
 		while i < len(self.array):
 			while j < len(self.array[i]):
-
 				if self.array[i][j] == self.activeLetter:
 					res.append([i,j])
-
 				j += 1
 			j = 0
 			i += 1
@@ -218,41 +175,12 @@ class State(object):
 				res = True
 		return res
 
-	def isNextToLetter(self,start):
-		res = False
-		for d in self.directions:
-			i = start[0] + d[0]
-			j = start[1] + d[1]
-
-			if inBounds(self.array, [i,j]) and self.array[i][j] == self.array[start[0]][start[1]]:
-				res = True
-		return res
-
-	def positionsOf(self, letter):
-		i = 0
-		j = 0
-		pos=[]
-		while i < len(self.array):
-			while j < len(self.array[i]):
-				if self.array[i][j] == letter:
-					pos.append([i,j])
-				j += 1
-			j=0
-			i += 1
-		return pos
-
-	def pathExistBetween(self,letter):
-		pos = self.positionsOf(letter)
-		return pathExists(self.array,pos[0],pos[1])
-
 	def pathNextTo(self, pos):
 		res = []
 		for d in self.directions:
 			i = pos[0] + d[0]
 			j = pos[1] + d[1]
 			next = [i, j]
-
-
 			if inBounds(self.array, next) and self.array[i][j] == ".":
 				res.append([i,j])
 
@@ -273,6 +201,7 @@ if __name__ == "__main__":
 	mystate = State(openIn(name))
 	prblm = NumberLink(mystate)
 	print(mystate)
+
 	start_time = time.time()
 	node = search.depth_first_tree_search(prblm)
 	path = node.path()

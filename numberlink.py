@@ -7,7 +7,7 @@ import os.path
 import shutil
 import copy
 import time
-
+import math
 import search
 from search import *
 from search import Problem
@@ -36,23 +36,41 @@ class NumberLink(Problem):
 			if self.simulation(state,n):
 				actionsValides.append(n)
 
-		actionsValides.reverse()
-		return actionsValides
+		actionsValidesOpti = self.sortActions(actionsValides,state)
+
+		actionsValidesOpti.reverse()
+		return actionsValidesOpti
 
 	def result(self, state, action):
 
 		newState = copy.deepcopy(state)
 		newState.action(action)
-		print(newState)
-		print(newState.activeLetter)
+		#print(newState)
+
 		return newState
 
+	def sortActions(self, array, state):
+		distances={}
+		for action in array:
 
+			dist = math.sqrt((action[0]-state.targetPos[0])**2+(action[1]-state.targetPos[1])**2)
+			actStr = str(action[0])+str(action[1])
+			distances[actStr]=dist
+
+		sort_distances = sorted(distances.items(), key=lambda x: x[1], reverse=False)
+
+		sortedArray = []
+		for i in sort_distances:
+			coord = [int(i[0][0]),int(i[0][1])]
+
+			sortedArray.append(coord)
+
+		return sortedArray
 
 	def simulation(self, state, action):
 		newState = copy.deepcopy(state)
 		newState.action(action)
-		if newState.deadEnd():
+		if newState.isInvalid():
 			return False
 		else:
 			return True
@@ -107,7 +125,7 @@ class State(object):
 		self.array = array
 		self.remainingLetters =  self.getAllLetters()
 		self.activeLetter = self.remainingLetters[0]
-		[self.lastPos, self.targetPos] = self.getFirstPos()
+		[self.lastPos, self.targetPos] = self.getFirstPos(self.activeLetter)
 
 		self.directions = [ [0, -1], [0, 1], [-1, 0], [1, 0] ]
 
@@ -124,24 +142,41 @@ class State(object):
 		return self.array[0] < other.array[0]
 
 
+
+
 	def action(self, pos):
 		self.lastPos = pos
 		self.array[pos[0]][pos[1]] = self.activeLetter
 		# newState.pathEnded(state.activeLetter)
 		if self.isPathEnded():
 			self.remainingLetters.remove(self.activeLetter)
+
 			if len(self.remainingLetters) != 0:
 				self.activeLetter = self.remainingLetters[0]
-				[self.lastPos, self.targetPos] = self.getFirstPos()
+				[self.lastPos, self.targetPos] = self.getFirstPos(self.activeLetter)
 
 		return None
 
 	def isPathEnded(self):
 		return self.isNextTo(self.lastPos,self.targetPos)
 
+	def isInvalid(self):
+		if self.deadEnd() or self.blockOtherPath():
+			return True
+		else:
+			return False
 
 	def deadEnd(self):
 		return not pathExists(self.array,self.lastPos,self.targetPos)
+
+	def blockOtherPath(self):
+
+		for letter in self.remainingLetters:
+			if letter != self.activeLetter:
+				[start,end] = self.getFirstPos(letter)
+				if not pathExists(self.array,start,end):
+					return True
+		return False
 
 	def getAllLetters(self):
 		output = []
@@ -152,13 +187,13 @@ class State(object):
 		output.remove(".")
 		return output
 
-	def getFirstPos(self):
+	def getFirstPos(self, letter):
 		res = []
 		i=0
 		j=0
 		while i < len(self.array):
 			while j < len(self.array[i]):
-				if self.array[i][j] == self.activeLetter:
+				if self.array[i][j] == letter:
 					res.append([i,j])
 				j += 1
 			j = 0
@@ -196,14 +231,14 @@ if __name__ == "__main__":
 	if len(sys.argv) > 1:
 		name = sys.argv[1]
 	else:
-		name = "easy.in"
+		name = "level2m.in"
 
 	mystate = State(openIn(name))
 	prblm = NumberLink(mystate)
 	print(mystate)
 
 	start_time = time.time()
-	node = search.depth_first_tree_search(prblm)
+	node = search.depth_first_graph_search(prblm)
 	path = node.path()
 	for n in path:
 		print(n.state)

@@ -6,6 +6,7 @@ import os
 import os.path
 import shutil
 import copy
+import time
 
 import search
 from search import *
@@ -36,16 +37,15 @@ class NumberLink(Problem):
 			if self.simulation(state,n):
 				actionsValides.append(n)
 
-
+		actionsValides.reverse()
 		return actionsValides
 
 	def result(self, state, action):
-		pos = action
+
 		newState = copy.deepcopy(state)
-		newState.lastPos = pos
-		newState.array[pos[0]][pos[1]] = state.activeLetter
-		newState.pathEnded(state.activeLetter)
-		#print(newState)
+		newState.action(action)
+		print(newState)
+		print(newState.activeLetter)
 		return newState
 
 
@@ -135,7 +135,27 @@ class State(object):
 		output.remove(".")
 		return output
 
+	def action(self, pos):
+		self.lastPos = pos
+		self.array[pos[0]][pos[1]] = self.activeLetter
+		# newState.pathEnded(state.activeLetter)
+		if self.isPathEnded():
+			self.remainingLetters.remove(self.activeLetter)
+			if len(self.remainingLetters) != 0:
+				self.activeLetter = self.remainingLetters[0]
+				[self.lastPos, self.targetPos] = self.getFirstPos()
 
+		return None
+
+
+
+		return newState
+
+	def isPathEnded(self):
+		res = False
+		if self.isNextTo(self.lastPos,self.targetPos):
+			res = True
+		return res
 	def pathEnded(self, letter):
 		i = 0
 		j = 0
@@ -244,16 +264,18 @@ class State(object):
 #####################
 
 
-mystate = State(openIn("easy.in"))
+if __name__ == "__main__":
+	if len(sys.argv) > 1:
+		name = sys.argv[1]
+	else:
+		name = "easy.in"
 
-prblm = NumberLink(mystate)
-print(mystate)
-
-
-
-node = search.depth_first_tree_search(prblm)
-path=node.path()
-for n in path:
-	print(n.state)
-
-#print(pathExists(mystate.array,[0,0],[0,1]))
+	mystate = State(openIn(name))
+	prblm = NumberLink(mystate)
+	print(mystate)
+	start_time = time.time()
+	node = search.depth_first_tree_search(prblm)
+	path = node.path()
+	for n in path:
+		print(n.state)
+	print("--- Temps de recherche : %s secondes---" % (time.time() - start_time))
